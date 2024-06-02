@@ -1,0 +1,4 @@
+.venv
+__pychase__/
+*.py[cod]
+*$py.class

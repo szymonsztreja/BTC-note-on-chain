@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "btc-note-on-chain"
+version = "0.1.0"
+description = ""
+authors = ["Szymon Sztreja <s26048@pjwstk.edu.pl>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.32.3"
+Flask = "^3.0.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
