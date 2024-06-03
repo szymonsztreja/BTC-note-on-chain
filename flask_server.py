@@ -21,20 +21,19 @@ def get_wallet():
     raw =  get_raw_change_address()
     #confirmed = balance["mine"]["trusted"]
     #unconfirmed = balance["mine"]["untrusted_pending"]
-    op_data_str = "Pies"
+    op_data_str = "dududududu"
     op_data_hex = op_data_str.encode().hex()
+    no_msg_transaction = 93
+    transaction_bytes = len(op_data_hex) + no_msg_transaction
     estm_fee_rate = get_estimated_fee()
-    fee = calculate_fee(125, estm_fee_rate)
+    fee = calculate_fee(transaction_bytes, estm_fee_rate)
     balance_after_fee = balance - fee
     if balance_after_fee < 0:
         balance_after_fee = balance
 
-
-    try:
-    	txhex = create_raw_transaction(utxo[0], utxo[1], op_data_hex, address, balance_after_fee)
-    except subprocess.CalledProcessError as e:
-        print("Error:", e)
-
+    txhex = create_raw_transaction(utxo[0], utxo[1], op_data_hex, address, balance_after_fee)
+    signed_hex = sign_transaction(txhex)
+    send_hex = send_transaction(signed_hex):
 
     # return "<h2>Adres konta:" + address + "</h2>" +  "<p> txid: " + str(utxo[0]) + "</p><p>  vout: " + str(utxo[1]) + "</p>" + "<p> " + str(raw) + "</p>"
     return (
@@ -48,6 +47,7 @@ def get_wallet():
         f"<p>Balance after fee: {balance_after_fee}</p>\n"
         f"<p>OP_RETURN data (string): {op_data_str}</p>\n"
         f"<p>OP_RETURN data (hex): {op_data_hex}</p>\n"
+        f"<p>OP_RETURN len: {len(op_data_hex)}</p>\n"
 	f"<p>thhex: {txhex}<p>\n"
     )
 
@@ -76,11 +76,13 @@ def generate_new_address(wallet_name="testwallet"):
 
 
 def create_raw_transaction(utxo_txid, utxo_vout, op_return_data, change_address, change_amount):
-    # Construct the command
     command = [
-        "bitcoin-cli", "-named", "createrawtransaction",
-        f"inputs='[{\"txid\": \"{utxo_txid}\", \"vout\": {utxo_vout}}]'",
-        f"outputs='{{\"data\": \"{op_return_data}\", \"{change_address}\": \"{change_amount}\"}}'"
+        "bitcoin-cli",
+	"-testnet",
+        "-named",
+        "createrawtransaction",
+        f'[{{\"txid\":\"{utxo_txid}\",\"vout\":{utxo_vout}}}]',
+        f'{{\"data\":\"{op_return_data}\",\"{change_address}\":{change_amount}}}'
     ]
 
     # Execute the command and capture the output
@@ -88,6 +90,16 @@ def create_raw_transaction(utxo_txid, utxo_vout, op_return_data, change_address,
 	
     return rawtxhex
 
+
+def sign_transaction(tx_id_hex):
+    command = ["signrawtransactionwithwallet", "-testnet", "-rpcwallet=testwallet", tx_id_hex]
+    signed_hex = json.loads(subprocess.check_output(command))["hex"]
+    return signed_hex
+
+def send_transaction(tx_hex):
+    command = ["sendrawtransaction", "-testnet", tx_hex]
+    response = subprocess.check_output(command)
+    return response.decode().strip()
 
 def get_raw_change_address():
    raw_change_address = subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "getrawchangeaddress"])
