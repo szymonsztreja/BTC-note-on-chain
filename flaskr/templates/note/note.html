@@ -9,7 +9,34 @@
     <label for="address">BTC addres to send funds to</label><br>
     <input type="text" id="address" name="address" value="{{ address }}" readonly><br>
     <label for="note">Blockchain note:</label><br>
-    <input type="text" name="note" id="note" required><br>
+    <input type="text" name="note" id="note" required oninput="calculateCost(this.value)"><br>
+    <p>Current cost of transaction: <span id="transaction-cost">0 BTC</span></p>
     <input class="btn" type="submit" value="Send">
   </form>
+
+  <script>
+    function calculateCost(note) {
+      // Make AJAX request to Flask server to calculate transaction cost
+      fetch('/note/calculate_transaction_cost', {
+        method: 'POST',
+        body: new URLSearchParams({
+          'note': note
+        }),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Update the displayed transaction cost
+        document.getElementById("transaction-cost").innerText = data.transaction_cost.toFixed(8) + " BTC";
+      })
+      .catch(error => console.error('Error:', error));
+    }
+
+    // Add event listener to input field
+    document.getElementById("note").addEventListener("input", function() {
+      calculateCost(this.value);
+    });
+  </script>
 {% endblock %}
