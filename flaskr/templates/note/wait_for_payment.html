@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Waiting for paymeny{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <label for="waiting">Waiting</label>
+    <textarea id="waiting" name="waiting">{{ address }}</textarea><br>
+{% endblock %}

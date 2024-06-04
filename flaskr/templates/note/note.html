@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Send note onto blockchain{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="address">BTC addres to send funds to</label><br>
+    <input type="text" id="address" name="address" value="{{ address }}" readonly><br>
+    <label for="note">Blockchain note:</label><br>
+    <input type="text" name="note" id="note" required><br>
+    <p>Current cost of transaction: <span id="transaction-cost">0 BTC</span></p>
+    <input type="hidden" name="transaction_cost" id="transaction-cost-hidden" value="0">
+    <input class="btn" type="submit" value="Send">
+  </form>
+    <script
+        src="{{ url_for('static', filename='js/cost.js') }}"
+  type="module"
+    ></script>
+
+{% endblock %}
