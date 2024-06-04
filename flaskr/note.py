@@ -1,17 +1,62 @@
-from flask import Flask
+from flask import (Flask, Blueprint, render_template, session, request, g, redirect, url_for)
 import requests
 import subprocess
 import json
 
-app = Flask(__name__)
 
+bp = Blueprint('note', __name__, url_prefix='/note')
 
 
 def get_balance():
     return  json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "getbalances"]))
 
 
-@app.route("/note")
+@bp.route("/", methods=["GET", "POST"])
+def note():
+    if request.method == 'POST':
+        note = request.form['note']
+
+        error = None
+
+        if len(note.encode('utf-8')) > 80:
+            error = 'Incorrect note length (max 80 bytes).'
+
+        if error is None:
+            session.clear()
+            user_id = note.encode().hex()
+            session['user_id'] = user_id
+            return redirect(url_for('note.wait_for_payment'))
+            
+
+        flash(error)
+ 
+    elif request.method == 'GET':
+        address_info = get_address_info()
+        address = address_info["address"]
+
+    return render_template('note/note.html', address=address)
+
+
+@bp.route("/waiting")
+def wait_for_payment():
+    return render_template("note/wait_for_payment.html")
+
+
+@bp.route('/quit_session')
+def quit_session():
+    session.clear()
+    return redirect(url_for('note.note'))
+
+
+@bp.before_app_request
+def load_logged_in_user():
+    user_id = session.get('user_id')
+    if user_id is None:
+        g.user = None
+    else:
+        g.user = {'user_id': user_id}
+
+
 def get_wallet():
     #address = generate_new_address()
     address_info = get_address_info()
@@ -28,12 +73,12 @@ def get_wallet():
     estm_fee_rate = get_estimated_fee()
     fee = calculate_fee(transaction_bytes, estm_fee_rate)
     balance_after_fee = balance - fee
-    if balance_after_fee < 0:
-        balance_after_fee = balance
+#    if balance_after_fee < 0:
+#        balance_after_fee = balance
 
-    txhex = create_raw_transaction(utxo[0], utxo[1], op_data_hex, address, balance_after_fee)
-    signed_hex = sign_transaction(txhex)
-    send_hex = send_transaction(signed_hex):
+#    txhex = create_raw_transaction(utxo[0], utxo[1], op_data_hex, address, balance_after_fee)
+#    signed_hex = sign_transaction(txhex)
+#    send_hex = send_transaction(signed_hex)
 
     # return "<h2>Adres konta:" + address + "</h2>" +  "<p> txid: " + str(utxo[0]) + "</p><p>  vout: " + str(utxo[1]) + "</p>" + "<p> " + str(raw) + "</p>"
     return (
@@ -96,14 +141,17 @@ def sign_transaction(tx_id_hex):
     signed_hex = json.loads(subprocess.check_output(command))["hex"]
     return signed_hex
 
+
 def send_transaction(tx_hex):
     command = ["sendrawtransaction", "-testnet", tx_hex]
     response = subprocess.check_output(command)
     return response.decode().strip()
 
+
 def get_raw_change_address():
    raw_change_address = subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "getrawchangeaddress"])
    return raw_change_address
+
 
 # Returns fee for a transaction based on tx size and current fee rate 
 def calculate_fee(tx_size, feerate):

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <h1>Flaskr</h1>
+        <ul>
+            {% if g.user %}
+                <li><span>{{ g.user['user_id'] }}</span></li>
+                <li><a href="{{ url_for('note.quit_session') }}">Quit session</a></li>
+            {% else %}
+                <!-- Add any alternative content for when the user is not logged in -->
+            {% endif %}
+        </ul>
+    </nav>
+    <section class="content">
+        <header>
+            {% block header %}{% endblock %}
+        </header>
+        {% for message in get_flashed_messages() %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+        {% block content %}
+        {% endblock %}
+    </section>
+</body>
+</html>
