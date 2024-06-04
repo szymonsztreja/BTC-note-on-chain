@@ -1,4 +1,4 @@
-from flask import (Flask, Blueprint, render_template, session, request, g, redirect, url_for)
+from flask import (Flask, Blueprint, render_template, session, request, g, redirect, url_for, jsonify)
 from bitcoin.bitcoin_actions import (transaction_cost, get_address_info)
 import requests
 import subprocess
@@ -16,7 +16,8 @@ def get_balance():
 def note():
     if request.method == 'POST':
         note = request.form['note']
-
+        amount_to_pay = request.form['transaction_cost']
+        address = request.form["address"]
         error = None
 
         if len(note.encode('utf-8')) > 80:
@@ -27,6 +28,8 @@ def note():
             session.clear()
             user_id = note.encode().hex()
             session['user_id'] = user_id
+            print(amount_to_pay)
+            print(address)
             return redirect(url_for('note.wait_for_payment'))
 
 
@@ -40,14 +43,13 @@ def note():
 
 
 
-from flask import jsonify
-
-@bp.route("/calculate_transaction_cost", methods=["POST"])
+@bp.route("/tx_cost", methods=["POST"])
 def calculate_transaction_cost():
-    note = request.form['note']
+    jsonData = request.get_json()
+    note = jsonData["note"]
     # Call your Python function to calculate the transaction cost
-    transaction_cost = calculate_transaction_cost(note)
-    return jsonify(transaction_cost=transaction_cost)
+    tx_cost = transaction_cost(note)
+    return jsonify(tx_cost=tx_cost)
 
 
 

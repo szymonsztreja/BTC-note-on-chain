@@ -100,12 +100,14 @@ def get_raw_change_address():
    return raw_change_address
 
 def transaction_cost(op_data_str):
+    BTC_note_fee = 0.3
     op_data_hex = op_data_str.encode().hex()
     no_msg_transaction = 93
     tx_size = len(op_data_hex) + no_msg_transaction + TYPICAL_TX_SIZE 
-    feerate = getestimated_fee()
+    feerate = get_estimated_fee()
     tx_cost = calculate_fee(tx_size, feerate)
-    return tx_cost
+    tx_cost = (BTC_note_fee * tx_cost) + tx_cost  
+    return round(tx_cost, 8)
 
 
 # Returns fee for a transaction based on tx size and current fee rate 
