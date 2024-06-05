@@ -7,8 +7,6 @@ import json
 
 bp = Blueprint('note', __name__, url_prefix='/note')
 
-
-
 @bp.route("/", methods=["GET", "POST"])
 def note():
     if request.method == 'POST':
@@ -42,6 +40,7 @@ def note():
     return render_template('note/note.html', address=address)
 
 
+
 @bp.route("/success", methods=["GET"])
 def success():
     address = session["address"]
@@ -53,8 +52,8 @@ def success():
     txhex = create_raw_transaction(utxo_txid, utxo_vout, op_data_hex, address, balance_after_fee)
     signed_hex = sign_transaction(txhex)
     send_hex = send_transaction(signed_hex)
-    return render_template('note/success.html', send_hex=send_hex)
-
+    return render_template('note/success.html', send_hex=send_hex) 
+  
 
 @bp.route("/tx_cost", methods=["POST"])
 def calculate_transaction_cost():

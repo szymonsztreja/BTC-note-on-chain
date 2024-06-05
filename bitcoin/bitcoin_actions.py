@@ -53,7 +53,6 @@ def get_address_info(address="tb1q7nst4y7wccahqg5maqagg7vj9l5vwfa5ycqmv0"):
 
 def get_utxo(address):
     utxo = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "listunspent", "0", "99999", f'["{address}"]']))[0]
-
     utxo_txid = utxo["txid"]
     utxo_vout = utxo["vout"]
     return utxo_txid,  utxo_vout
@@ -123,7 +122,6 @@ def transaction_brutto(op_data_str):
     BTC_note_fee = 0.3 
     tx_cost = transaction_cost(op_data_str)
     return (BTC_note_fee * tx_cost) + tx_cost
-
 
 # Returns fee for a transaction based on tx size and current fee rate 
 def calculate_fee(tx_size, feerate):
