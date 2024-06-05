@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Waiting for payment{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <label for="tx-hex">Transaction hex</label>
+    <p id="tx-hex" name="tx-hex">{{ send_hex }}</p><br>
+    
+    <script
+        src="{{ url_for('static', filename='js/check_payment.js') }}"
+  type="module"
+    ></script>
+
+{% endblock %}
+

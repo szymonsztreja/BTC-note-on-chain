@@ -1,10 +1,21 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Waiting for paymeny{% endblock %}</h1>
+  <h1>{% block title %}Waiting for payment{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-    <label for="waiting">Waiting</label>
-    <textarea id="waiting" name="waiting">{{ address }}</textarea><br>
+    <label for="waiting">Address</label>
+    <p id="waiting" name="waiting">{{ address }}</p><br>
+    <label for="amount">Amount to pay</label>
+    <p id="amount" name="amount">{{ amount_to_pay }}</p><br>
+    <label for="status">Status: </label>
+    <p id="status" name="status"> {{ status }} </p><br>
+    <button id="check-payment-status" class="btn" type="button">Check payment status!</button> 
+
+    <script
+        src="{{ url_for('static', filename='js/check_payment.js') }}"
+  type="module"
+    ></script>
+
 {% endblock %}
