@@ -4,62 +4,23 @@ import json
 
 TYPICAL_TX_SIZE = 200
 
-def get_wallet():
-    #address = generate_new_address()
-    address_info = get_address_info()
-    address = address_info["address"]
-    balance = address_info["amount"]
-    utxo = get_utxo(address)
-    raw =  get_raw_change_address()
-    #confirmed = balance["mine"]["trusted"]
-    #unconfirmed = balance["mine"]["untrusted_pending"]
-    op_data_str = "dududududu"
-    op_data_hex = op_data_str.encode().hex()
-    no_msg_transaction = 93
-    transaction_bytes = len(op_data_hex) + no_msg_transaction
-    estm_fee_rate = get_estimated_fee()
-    fee = calculate_fee(transaction_bytes, estm_fee_rate)
-    balance_after_fee = balance - fee
-#    if balance_after_fee < 0:
-#        balance_after_fee = balance
-
-#    txhex = create_raw_transaction(utxo[0], utxo[1], op_data_hex, address, balance_after_fee)
-#    signed_hex = sign_transaction(txhex)
-#    send_hex = send_transaction(signed_hex)
-
-    # return "<h2>Adres konta:" + address + "</h2>" +  "<p> txid: " + str(utxo[0]) + "</p><p>  vout: " + str(utxo[1]) + "</p>" + "<p> " + str(raw) + "</p>"
-    return (
-        f"<h2>Adres konta: {address}</h2>\n"
-        f"<p>Balance: {balance}</p>\n"
-        f"<p>UTXO txid: {utxo[0]}</p>\n"
-        f"<p>UTXO vout: {utxo[1]}</p>\n"
-        f"<p>Raw change address: {raw}</p>\n"
-        f"<p>Estimated fee rate: {estm_fee_rate}</p>\n"
-        f"<p>Calculated fee: {fee}</p>\n"
-        f"<p>Balance after fee: {balance_after_fee}</p>\n"
-        f"<p>OP_RETURN data (string): {op_data_str}</p>\n"
-        f"<p>OP_RETURN data (hex): {op_data_hex}</p>\n"
-        f"<p>OP_RETURN len: {len(op_data_hex)}</p>\n"
-	f"<p>thhex: {txhex}<p>\n"
-    )
-
 
 def get_address_info(address="tb1q7nst4y7wccahqg5maqagg7vj9l5vwfa5ycqmv0"):
-    address_info = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "listreceivedbyaddress"]))
+    address_info = json.loads(subprocess.check_output(["bitcoin-cli", "-regtest", "-rpcwallet=money", "listreceivedbyaddress"]))
     return address_info[0]
-    #address_info = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "getaddressinfo", address]))
+    #address_info = json.loads(subprocess.check_output(["bitcoin-cli", "-regtest", "-rpcwallet=money", "getaddressinfo", address]))
     #return address_info 
 
 
 def get_utxo(address):
-    utxo = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "listunspent", "0", "99999", f'["{address}"]']))[0]
+    utxo = json.loads(subprocess.check_output(["bitcoin-cli", "-regtest", "-rpcwallet=money", "listunspent", "0", "99999", f'["{address}"]']))[0]
     utxo_txid = utxo["txid"]
     utxo_vout = utxo["vout"]
     return utxo_txid,  utxo_vout
 
 
 def get_balance(address):
-    utxos = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "listunspent", "0", "9999999", f'["{address}"]']))
+    utxos = json.loads(subprocess.check_output(["bitcoin-cli", "-regtest", "-rpcwallet=money", "listunspent", "0", "9999999", f'["{address}"]']))
     
     if len(utxos) > 0:
         total_received = sum(utxo["amount"] for utxo in utxos)
@@ -68,9 +29,9 @@ def get_balance(address):
         return 0
 
 
-def generate_new_address(wallet_name="testwallet"):
+def generate_new_address(wallet_name="money"):
     try:
-        output = subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=" + wallet_name, "getnewaddress"])
+        output = subprocess.check_output(["bitcoin-cli", "-regtest", "-rpcwallet=" + wallet_name, "getnewaddress"])
         new_address = output.decode("utf-8").strip()
         return new_address
     except subprocess.CalledProcessError as e:
@@ -81,8 +42,9 @@ def generate_new_address(wallet_name="testwallet"):
 def create_raw_transaction(utxo_txid, utxo_vout, op_return_data, change_address, change_amount):
     command = [
         "bitcoin-cli",
-	"-testnet",
+	"-regtest",
         "-named",
+        "-rpcwallet=money",
         "createrawtransaction",
         f'[{{\"txid\":\"{utxo_txid}\",\"vout\":{utxo_vout}}}]',
         f'{{\"data\":\"{op_return_data}\",\"{change_address}\":{change_amount}}}'
@@ -94,20 +56,44 @@ def create_raw_transaction(utxo_txid, utxo_vout, op_return_data, change_address,
 
 
 def sign_transaction(tx_id_hex):
-    command = ["signrawtransactionwithwallet", "-testnet", "-rpcwallet=testwallet", tx_id_hex]
-    signed_hex = json.loads(subprocess.check_output(command))["hex"]
+    wpp
+    command = ["signrawtransactionwithwallet", "-regtest", "-rpcwallet=money", tx_id_hex]
+    signed_hex = subprocess.run(command, check=True, capture_output=True, text=True)
     return signed_hex
 
 
+def wpp(passph="passph"):
+    command = ["walletpassphrase", "-regtest", "-rpcwallet=money", passph, "100"]
+    signed_hex = subprocess.run(command, check=True, capture_output=True, text=True)
+    return signed_hex
+
+
+def sign_with_key(address, raw_transaction):
+    command = ["dumpprivkey", "-regtest", "-rpcwallet=money", address]
+    signed_hex = json.loads(subprocess.check_output(command)).decode('utf-8').strip()
+    dump_command = [
+        "bitcoin-cli",
+        "signrawtransactionwithkey",
+        "-regtest",
+        "-rpcwallet=money",
+        raw_transaction,
+        json.dumps([key])
+    ]
+    private_key = subprocess.check_output(dump_command, text=True).strip()
+    #signed_hex = json.loads(subprocess.check_output(command))["hex"]
+    return private_key
+  
+
 def send_transaction(tx_hex):
-    command = ["sendrawtransaction", "-testnet", tx_hex]
+    command = ["sendrawtransaction", "-regtest" "-rpcwallet=money", tx_hex]
     response = subprocess.check_output(command)
     return response.decode().strip()
 
 
 def get_raw_change_address():
-   raw_change_address = subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "getrawchangeaddress"])
-   return raw_change_address
+   raw_change_address = subprocess.check_output(["bitcoin-cli", "-regtest", "-rpcwallet=money", "getrawchangeaddress"])
+   raw = raw_change_address.decode("utf-8").strip()
+   return raw
 
 def transaction_cost(op_data_str):
     op_data_hex = op_data_str.encode().hex()
@@ -119,7 +105,7 @@ def transaction_cost(op_data_str):
 
 
 def transaction_brutto(op_data_str):
-    BTC_note_fee = 0.3 
+    BTC_note_fee = 1.5 
     tx_cost = transaction_cost(op_data_str)
     return (BTC_note_fee * tx_cost) + tx_cost
 
@@ -134,3 +120,18 @@ def get_estimated_fee(blocks=6):
     result = subprocess.check_output(["bitcoin-cli", "-testnet", "estimatesmartfee", str(blocks)])
     fee_info = json.loads(result)
     return fee_info["feerate"]
+
+
+def get_utxo_json(address):
+    utxo = json.loads(subprocess.check_output(["bitcoin-cli", "-regtest", "-rpcwallet=money", "listunspent", "0", "99999", f'["{address}"]']))[0]
+    utxo_txid = utxo["txid"]
+    utxo_vout = utxo["vout"]
+    script_pub_key = utxo["scriptPubKey"]
+    amount = utxo["amount"]
+    input_json = {
+        "txid": utxo["txid"],
+        "vout": utxo["vout"],
+        "scriptPubKey": utxo["scriptPubKey"],
+        "amount": utxo["amount"]
+    }
+    return input_json

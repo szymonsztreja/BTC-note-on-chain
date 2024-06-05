@@ -12,7 +12,7 @@ function calculateCost(note) {
     .then(response => response.json())  
     .then(json => {
         console.log(json);
-        let transactionCost = json.tx_cost
+        let transactionCost = json.tx_cost.toFixed(8)
         document.getElementById("transaction-cost").innerHTML = transactionCost
         document.getElementById("transaction-cost-hidden").value = transactionCost
     })

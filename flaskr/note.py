@@ -1,5 +1,5 @@
 from flask import (Flask, Blueprint, render_template, session, request, g, redirect, url_for, jsonify)
-from bitcoin.bitcoin_actions import (transaction_cost, get_address_info, get_utxo, get_balance,  generate_new_address, transaction_brutto,create_raw_transaction, sign_transaction, send_transaction)
+from bitcoin.bitcoin_actions import (transaction_cost, get_address_info, get_utxo, get_balance,  generate_new_address, transaction_brutto,create_raw_transaction, sign_transaction, send_transaction, get_raw_change_address, sign_with_key, get_utxo_json)
 import requests
 import subprocess
 import json
@@ -33,9 +33,9 @@ def note():
         flash(error)
 
     elif request.method == 'GET':
-        address_info = get_address_info()
-        address = address_info["address"]
-        #address = generate_new_address()
+        #address_info = get_address_info()
+        #address = address_info["address"]
+        address = generate_new_address()
 
     return render_template('note/note.html', address=address)
 
@@ -49,9 +49,15 @@ def success():
     balance_after_fee = balance - transaction_cost(note)
     op_data_hex = note.encode().hex()
     utxo_txid,  utxo_vout = get_utxo(address)
-    txhex = create_raw_transaction(utxo_txid, utxo_vout, op_data_hex, address, balance_after_fee)
+    exchange_address = get_raw_change_address()
+    txhex = create_raw_transaction(utxo_txid, utxo_vout, op_data_hex, exchange_address, balance_after_fee)
+    print("Raw tx:" + txhex)
+    #inputs = get_utxo_json(address)
     signed_hex = sign_transaction(txhex)
+    #signed_hex = sign_with_key(address, txhex)
+    print("Signed tx:" + signed_hex)
     send_hex = send_transaction(signed_hex)
+    print("Send tx:" + send_hex)
     return render_template('note/success.html', send_hex=send_hex) 
   
 
