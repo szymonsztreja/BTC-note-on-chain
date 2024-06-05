@@ -44,17 +44,29 @@ def get_wallet():
     )
 
 
-def get_address_info():
-    address_info = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "listreceivedbyaddress", "0","true"]))
-    return address_info[0] 
+def get_address_info(address="tb1q7nst4y7wccahqg5maqagg7vj9l5vwfa5ycqmv0"):
+    address_info = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "listreceivedbyaddress"]))
+    return address_info[0]
+    #address_info = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "getaddressinfo", address]))
+    #return address_info 
 
 
 def get_utxo(address):
-    utxo = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "listunspent", "0", "99999", f'["{address}"]']))
-    utxo = utxo[0]
+    utxo = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "listunspent", "0", "99999", f'["{address}"]']))[0]
+
     utxo_txid = utxo["txid"]
     utxo_vout = utxo["vout"]
     return utxo_txid,  utxo_vout
+
+
+def get_balance(address):
+    utxos = json.loads(subprocess.check_output(["bitcoin-cli", "-testnet", "-rpcwallet=testwallet", "listunspent", "0", "9999999", f'["{address}"]']))
+    
+    if len(utxos) > 0:
+        total_received = sum(utxo["amount"] for utxo in utxos)
+        return total_received
+    else:
+        return 0
 
 
 def generate_new_address(wallet_name="testwallet"):
@@ -77,7 +89,6 @@ def create_raw_transaction(utxo_txid, utxo_vout, op_return_data, change_address,
         f'{{\"data\":\"{op_return_data}\",\"{change_address}\":{change_amount}}}'
     ]
 
-    # Execute the command and capture the output
     rawtxhex = subprocess.check_output(command).decode('utf-8').strip()
 
     return rawtxhex
@@ -100,14 +111,18 @@ def get_raw_change_address():
    return raw_change_address
 
 def transaction_cost(op_data_str):
-    BTC_note_fee = 0.3
     op_data_hex = op_data_str.encode().hex()
     no_msg_transaction = 93
     tx_size = len(op_data_hex) + no_msg_transaction + TYPICAL_TX_SIZE 
     feerate = get_estimated_fee()
-    tx_cost = calculate_fee(tx_size, feerate)
-    tx_cost = (BTC_note_fee * tx_cost) + tx_cost  
+    tx_cost = calculate_fee(tx_size, feerate)  
     return round(tx_cost, 8)
+
+
+def transaction_brutto(op_data_str):
+    BTC_note_fee = 0.3 
+    tx_cost = transaction_cost(op_data_str)
+    return (BTC_note_fee * tx_cost) + tx_cost
 
 
 # Returns fee for a transaction based on tx size and current fee rate 
